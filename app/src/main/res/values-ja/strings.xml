@@ -1,0 +1,22 @@
+<resources>
+
+    <string name="app_name">STM(短期記憶)</string>
+    <string name="string_url_help">"http://noble-programmer.blogspot.jp/p/stmshort-time-memory.html"</string>
+    <string name="action_settings">設定</string>
+    <string name="action_help">ヘルプ</string>
+    <string name="action_flash">フラッシュ設定</string>
+    <string name="action_flash_auto">自動</string>
+    <string name="action_flash_on">オン</string>
+    <string name="action_flash_off">オフ</string>
+    <string name="action_picture_size">撮影画像サイズ</string>
+    <string name="action_storage_capacity">保持枚数</string>
+    <string name="action_storage_capacity_5">5</string>
+    <string name="action_storage_capacity_10">10</string>
+    <string name="action_storage_capacity_20">20</string>
+    <string name="action_thumbnail_location_right">右側</string>
+    <string name="action_thumbnail_location_left">左側</string>
+    <string name="action_thumbnail_location">サムネイルの配置</string>
+    <string name="string_cancel">キャンセル</string>
+    <string name="string_taking_picture">撮影中</string>
+    <string name="admob_id">"ca-app-pub-4043672088061308/9976545276"</string>
+</resources>

@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.nag.android.cammemo.MainActivity" >
+    <item android:id="@+id/action_picture_size" android:title="@string/action_picture_size"></item><item android:id="@+id/action_flash_setting" android:title="@string/action_flash">
+    </item><item android:id="@+id/action_strage_capacity" android:title="@string/action_storage_capacity">
+    </item><item android:id="@+id/action_thumbnail_location" android:title="@string/action_thumbnail_location">
+    </item><item android:id="@+id/action_help" android:title="@string/action_help"></item>
+    
+    
+    
+    
+
+</menu>
