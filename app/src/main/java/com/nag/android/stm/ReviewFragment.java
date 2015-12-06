@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -30,6 +31,7 @@ public class ReviewFragment extends Fragment implements TranslationGestureDetect
 	private TranslationGestureDetector tgd;
 	private MenuHandler menuhandler;
 	private float scale = 0.0f;
+	private float prev_scale = 0.0f;
 	private float cx, cy;
 	private float px, py;
 
@@ -88,6 +90,7 @@ public static ReviewFragment newInstance(){
 					}
 					@Override
 					public boolean onScale(ScaleGestureDetector detector) {
+						prev_scale = scale;
 						scale *= detector.getScaleFactor();
 						return true;
 					}
@@ -127,7 +130,7 @@ public static ReviewFragment newInstance(){
 
 		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-			present(holder, width, height);
+			present(holder, width, height, 0, 0);
 		}
 
 		@Override
@@ -143,11 +146,11 @@ public static ReviewFragment newInstance(){
 			}
 		}
 
-		private void present(){
-			present(holder, width, height);
+		private void present(float x, float y){
+			present(holder, width, height, x, y);
 		}
 
-		private void present(SurfaceHolder holder, int width, int height)
+		private void present(SurfaceHolder holder, int width, int height, float x,float y)
 		{
 			this.holder = holder;
 			this.width = width;
@@ -161,7 +164,7 @@ public static ReviewFragment newInstance(){
 				}else{
 					scale = sh;
 				}
-				scale_min = scale;
+				scale_min = prev_scale = scale;
 				scale_max = scale_min*MAX_MAGNIFY;
 			}
 
@@ -169,6 +172,13 @@ public static ReviewFragment newInstance(){
 				scale = scale_max;
 			}else if(scale < scale_min){
 				scale = scale_min;
+			}
+			if(scale != prev_scale){
+//				cx -= (float)(bitmap.getWidth()/2) * (scale / prev_scale);
+//				cy -= (float)(bitmap.getHeight()/2) * (scale / prev_scale);
+				cx -= x * (scale - prev_scale);
+				cy -= y * (scale - prev_scale);
+				prev_scale = scale;
 			}
 			if(cx > 0 ){
 				cx = 0 ;
@@ -196,8 +206,13 @@ public static ReviewFragment newInstance(){
 			super.onTouchEvent(event);
 			sgd.onTouchEvent(event);
 			tgd.onTouch(v, event);
-
-			present();
+			float x = 0;
+			float y = 0;
+			if(event.getPointerCount()==2){
+				x = (event.getX(0) + event.getX(1)) / 2;
+				y = (event.getY(0) + event.getY(1)) / 2;
+			}
+			present(x, y);
 			return true;
 		}
 		@Override

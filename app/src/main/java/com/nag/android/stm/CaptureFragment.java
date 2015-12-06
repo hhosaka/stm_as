@@ -27,6 +27,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class CaptureFragment extends Fragment implements OnClickListener, SurfaceHolder.Callback, PictureCallback,AutoFocusCallback, OnItemClickListener,Camera.ShutterCallback, MenuHandler.Listener {
 	public static CaptureFragment newInstance(){
@@ -106,6 +107,7 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 		try {
 			camera.setPreviewDisplay(holder);
 		} catch (IOException e) {
+			Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
 			e.printStackTrace();
 		}
 	}
