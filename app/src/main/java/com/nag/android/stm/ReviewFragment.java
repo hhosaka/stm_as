@@ -9,7 +9,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Point;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -34,11 +33,13 @@ public class ReviewFragment extends Fragment implements TranslationGestureDetect
 	private float prev_scale = 0.0f;
 	private float cx, cy;
 	private float px, py;
+	private String filename;
+//	protected MenuItem menuitem_protect = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		menuhandler = new MenuHandler(this);
+		menuhandler = new MenuHandler(getActivity(), this);
 		setHasOptionsMenu(true);
 	}
  
@@ -72,7 +73,7 @@ public static ReviewFragment newInstance(){
 	}
 
 //	private Point size;
-	public static final String ARG_FILENAME = "flename";
+	public static final String ARG_FILENAME = "filename";
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
@@ -98,7 +99,10 @@ public static ReviewFragment newInstance(){
 		tgd = new TranslationGestureDetector(this);
 
 		try{
-			InputStream in = context.openFileInput(getArguments().getString(ARG_FILENAME));
+			boolean test;
+			filename = getArguments().getString(ARG_FILENAME);
+//			menuitem_protect.setChecked(test = ProtectManager.getInstance(getActivity()).isProtected(filename));
+			InputStream in = context.openFileInput(filename);
 			Bitmap org = BitmapFactory.decodeStream(in);
 			rootView.setBitmap(org);
 			in.close();
@@ -106,6 +110,7 @@ public static ReviewFragment newInstance(){
 			rootView.setBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher));
 			Toast.makeText(context, e.getMessage(), Toast.LENGTH_LONG).show();
 		}
+		setHasOptionsMenu(true);
 		return rootView;
 	}
 
@@ -223,13 +228,18 @@ public static ReviewFragment newInstance(){
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		inflater.inflate(R.menu.main, menu);
+		inflater.inflate(R.menu.review, menu);
+		menuhandler.initialize(getActivity(), menu, filename);
+		super.onCreateOptionsMenu(menu, inflater);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if(menuhandler.onOptionsItemSelected(getActivity(), item)){
-			return true;
+		switch(item.getItemId()){
+		default:
+			if(menuhandler.onOptionsItemSelected(getActivity(), filename, item)){
+				return true;
+			}
 		}
 		return super.onOptionsItemSelected(item);
 	}

@@ -57,9 +57,14 @@ class ThumbnailAdapter extends ArrayAdapter<ThumbnailInfo>{
 
 	private void recycle(Context context){
 		if(this.getCount()>capacity){
-			ThumbnailInfo info = this.getItem(this.getCount()-1);
-			context.deleteFile(info.getFilename());
-			this.remove(info);
+			for(int i=0; i<getCount(); ++i){
+				ThumbnailInfo info = this.getItem(this.getCount() - i - 1);
+				if(!ProtectManager.getInstance(context).isProtected(info.getFilename())){
+					context.deleteFile(info.getFilename());
+					//ProtectManager.getInstance(context).remove(info.getFilename());
+					this.remove(info);
+				}
+			}
 		}
 	}
 
@@ -83,7 +88,7 @@ class ThumbnailAdapter extends ArrayAdapter<ThumbnailInfo>{
 		
 		return convertView;
 	}
-	
+
 	public void resetCapacity(int capacity){
 		this.capacity = capacity;
 		while(getCount()>capacity){

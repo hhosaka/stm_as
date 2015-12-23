@@ -2,8 +2,6 @@ package com.nag.android.stm;
 
 import java.io.IOException;
 
-import com.nag.android.stm.R;
-
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -43,7 +41,7 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		menuhandler = new MenuHandler(this);
+		menuhandler = new MenuHandler(getActivity(), this);
 		setHasOptionsMenu(true);
 	}
  
@@ -150,12 +148,12 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		inflater.inflate(R.menu.main, menu);
+		inflater.inflate(R.menu.capture, menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		if(menuhandler.onOptionsItemSelected(getActivity(), item)){
+		if(menuhandler.onOptionsItemSelected(getActivity(), null, item)){
 			return true;
 		}
 		return super.onOptionsItemSelected(item);

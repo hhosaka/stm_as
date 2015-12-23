@@ -17,6 +17,7 @@ public class ASyncThumbnailUpdater extends AsyncTask<Context,ThumbnailInfo,Void>
 		this.size = size;
 	}
 
+
 	@Override
 	protected Void doInBackground(Context... context) {
 		String[] files = context[0].fileList();

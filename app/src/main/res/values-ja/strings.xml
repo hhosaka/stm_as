@@ -2,6 +2,8 @@
 
     <string name="app_name">STM(短期記憶)</string>
     <string name="string_url_help">"http://noble-programmer.blogspot.jp/p/stmshort-time-memory.html"</string>
+    <string name="action_protect">保護</string>
+    <string name="action_export">エクスポート</string>
     <string name="action_settings">設定</string>
     <string name="action_help">ヘルプ</string>
     <string name="action_flash">フラッシュ設定</string>
