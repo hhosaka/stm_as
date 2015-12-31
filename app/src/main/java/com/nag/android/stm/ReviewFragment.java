@@ -24,7 +24,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-public class ReviewFragment extends Fragment implements TranslationGestureDetector.TranslationGestureListener,MenuHandler.Listener{
+public class ReviewFragment extends Fragment implements TranslationGestureDetector.TranslationGestureListener,MenuHandler.Listener, StorageCapacityManager.Listener{
 
 	private ScaleGestureDetector sgd;
 	private TranslationGestureDetector tgd;
@@ -39,7 +39,7 @@ public class ReviewFragment extends Fragment implements TranslationGestureDetect
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		menuhandler = new MenuHandler(getActivity(), this);
+		menuhandler = new MenuHandler(getActivity(), this, this);
 		setHasOptionsMenu(true);
 	}
  

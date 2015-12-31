@@ -12,7 +12,6 @@ import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -38,27 +37,29 @@ import com.nag.android.util.PreferenceHelper;
 public class MenuHandler {
 	public interface Listener{
 		void onUpdateFlash(String mode);
-		void onResetCapacity(int size);
 		Camera getCamera();
 		void onUpdateThumbnailSide(int side);
 	}
 
 	private static final String PREF_FLASH_MODE = "flash_mode";
-	private static final String PREF_STORAGE_CAPACITY = "storage_capacity";
 	private static final String PREF_PICTURE_SIZE = "picture_size";
 	private static final String PREF_THUMBNAIL_LOCATION = "thumbnail_location";
+	private final PreferenceHelper ph;
 	private final ProtectManager protectmanager;
+	private final StorageCapacityManager scm;
+	private final Listener listener;
 
-	Listener listener = null;;
-
-	MenuHandler(Context context, Listener listener){
+	MenuHandler(Context context, Listener listener, StorageCapacityManager.Listener scmlistener){
 		assert(listener!=null);
 		this.listener = listener;
-		protectmanager = ProtectManager.getInstance(context);
+		ph = PreferenceHelper.getInstance(context);
+		protectmanager = new ProtectManager(ph);
+		scm = new StorageCapacityManager(ph, protectmanager, scmlistener);
+
 	}
 
 	private boolean isProtectAvailable(Context context){
-		return protectmanager.getCount() < getStorageCapacity(context);
+		return protectmanager.getCount() < scm.get(context);
 	}
 
 	MenuItem itemProtect = null;
@@ -78,14 +79,17 @@ public class MenuHandler {
 		}
 	}
 
-	private static void copy(File srcPath, File destPath) throws IOException{
+	private static void copy(FileInputStream src, FileOutputStream dest) throws IOException{
 
-		FileChannel srcChannel = new FileInputStream(srcPath).getChannel();
-		FileChannel destChannel = new FileOutputStream(destPath).getChannel();
+		FileChannel srcChannel = src.getChannel();
+		FileChannel destChannel = dest.getChannel();
 
 		srcChannel.transferTo(0, srcChannel.size(), destChannel);
+
 		destChannel.close();
 		srcChannel.close();
+		dest.close();
+		src.close();
 	}
 
 	private void registAndroidDB(Context context, String path) {
@@ -96,7 +100,7 @@ public class MenuHandler {
 		contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 	}
 
-	private void export(Context context, String filename){
+	private String export(Context context, String filename){
 		String saveDir = Environment.getExternalStorageDirectory().getPath() + "/stm";
 		File file = new File(saveDir);
 
@@ -111,18 +115,29 @@ public class MenuHandler {
 		String imgPath = saveDir + "/" + sf.format(cal.getTime()) + ".jpg";
 
 		try {
-			copy(new File(filename), new File(imgPath));
+			copy(context.openFileInput(filename), new FileOutputStream(imgPath));
 		}catch(IOException e) {
 			Toast.makeText(context, "fail to copy file", Toast.LENGTH_LONG);
 		}
 		registAndroidDB(context, imgPath);
+		return imgPath;
+	}
+
+	private void sendMail(Context context, String filename){
+
+		String imgPath = export(context, filename);
+		Intent intent = new Intent();
+		intent.setAction(Intent.ACTION_SEND);
+//		intent.putExtra(Intent.EXTRA_EMAIL, new String[] {"test@exsample.com"});
+		intent.putExtra(Intent.EXTRA_SUBJECT, "picture from s.t.m.");
+		intent.putExtra(Intent.EXTRA_TEXT, filename);
+		intent.setType("text/plain");
+		intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(imgPath)));
+		context.startActivity(intent);
 	}
 
 	public boolean onOptionsItemSelected(Context context, String filename, MenuItem menuitem){
 		switch (menuitem.getItemId()){
-		case R.id.action_export:
-			export(context, filename);
-			return true;
 		case R.id.action_protected:
 			if(menuitem.isChecked()){
 				protectmanager.remove(filename);
@@ -133,11 +148,17 @@ public class MenuHandler {
 			}
 			setProtectStatus(context, filename);
 			return true;
+		case R.id.action_export:
+			export(context, filename);
+			return true;
+		case R.id.action_send_mail:
+			sendMail(context, filename);
+			return true;
 		case R.id.action_flash_setting:
 			selectFlashMode(context);
 			return true;
 		case R.id.action_strage_capacity:
-			selectStorageCapacity(context);
+			scm.select(context);
 			return true;
 		case R.id.action_picture_size:
 			selectPictureSize(context);
@@ -180,59 +201,7 @@ public class MenuHandler {
 		return PreferenceHelper.getInstance(context).getString(PREF_FLASH_MODE, Camera.Parameters.FLASH_MODE_AUTO);
 	}
 
-	private void selectStorageCapacity(final Context context){
-		int protectnum = protectmanager.getCount();
-		List<LabeledIntItem>temp = new ArrayList<LabeledIntItem>();
-		if(protectnum < 5){temp.add(new LabeledIntItem(context.getResources().getString(R.string.action_storage_capacity_5),5));}
-		if(protectnum < 10){temp.add(new LabeledIntItem(context.getResources().getString(R.string.action_storage_capacity_10),10));}
-		if(protectnum < 20){temp.add(new LabeledIntItem(context.getResources().getString(R.string.action_storage_capacity_20),20));}
-		final LabeledIntItem[] storagecapacityitems = temp.toArray(new LabeledIntItem[0]);
-		int size = PreferenceHelper.getInstance(context).getInt(PREF_STORAGE_CAPACITY, 10);
 
-		new AlertDialog.Builder(context)
-		.setTitle(context.getResources().getString(R.string.action_storage_capacity))
-		.setSingleChoiceItems(storagecapacityitems, LabeledItem.indexOf(storagecapacityitems,Integer.valueOf(size)), new OnClickListener(){
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				int capacity = storagecapacityitems[which].getValue();
-				if(protectmanager.getCount()<=capacity) {
-					PreferenceHelper.getInstance(context).putInt(PREF_STORAGE_CAPACITY, capacity);
-					if (recycle(context, capacity) && listener != null) {
-						listener.onResetCapacity(capacity);
-					}
-				}
-				dialog.dismiss();
-			}
-
-			private boolean recycle(Context context, int capacity){
-				String[] files = context.fileList();
-				if(files.length>capacity){
-					Arrays.sort(files, new Comparator<String>(){
-						@Override
-						public int compare(String lhs, String rhs) {
-							return lhs.compareTo(rhs);
-						}
-					});
-					int cnt = files.length - capacity;
-					for(int i=0 ; cnt >0 && i<files.length; ++i) {
-						if(!protectmanager.isProtected(files[i])){
-							context.deleteFile(files[i]);
-							protectmanager.remove(files[i]);
-							--cnt;
-						}
-					}
-					return true;
-				}
-				return false;
-			}
-		})
-		.setNegativeButton(context.getResources().getString(R.string.string_cancel), null)
-		.show();
-	}
-
-	public int getStorageCapacity(Context context){
-		return PreferenceHelper.getInstance(context).getInt(PREF_STORAGE_CAPACITY, 10);
-	}
 
 	private void selectPictureSize(final Context context){
 		Camera camera = listener.getCamera();

@@ -27,7 +27,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class CaptureFragment extends Fragment implements OnClickListener, SurfaceHolder.Callback, PictureCallback,AutoFocusCallback, OnItemClickListener,Camera.ShutterCallback, MenuHandler.Listener {
+public class CaptureFragment extends Fragment implements OnClickListener, SurfaceHolder.Callback, PictureCallback,AutoFocusCallback, OnItemClickListener,Camera.ShutterCallback, MenuHandler.Listener, StorageCapacityManager.Listener {
 	public static CaptureFragment newInstance(){
 		final CaptureFragment instance = new CaptureFragment();
 		return instance;
@@ -41,7 +41,7 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		menuhandler = new MenuHandler(getActivity(), this);
+		menuhandler = new MenuHandler(getActivity(), this, this);
 		setHasOptionsMenu(true);
 	}
  
@@ -55,7 +55,7 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 		ListView thumbnail = (ListView)rootView.findViewById(R.id.listViewThumbnail);
 		Point size=new Point();
 		getActivity().getWindowManager().getDefaultDisplay().getSize(size);
-		adapter = ThumbnailAdapter.getInstance(getActivity(), menuhandler.getStorageCapacity(getActivity()),menuhandler.getThumbnailSide(getActivity()), size);
+		adapter = ThumbnailAdapter.getInstance(getActivity(), menuhandler.getThumbnailSide(getActivity()), size);
 		thumbnail.setAdapter(adapter);// TODO
 		thumbnail.setOnItemClickListener(this);
 		shutter =(Button) rootView.findViewById(R.id.buttonTakePicture);
@@ -161,7 +161,7 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 
 	@Override
 	public void onResetCapacity(int size) {
-		adapter.resetCapacity(size);
+		adapter.resetCapacity(getActivity());
 	}
 
 	@Override
