@@ -20,11 +20,14 @@ class StorageCapacityManager {
 	private static final String PREF_STORAGE_CAPACITY = "storage_capacity";
 	private final PreferenceHelper ph;
 	private final ProtectManager pm;
-	private final Listener listener;
+	private Listener listener;
 
-	StorageCapacityManager(PreferenceHelper ph, ProtectManager pm, Listener listener){
+	StorageCapacityManager(PreferenceHelper ph, ProtectManager pm){
 		this.ph = ph;
 		this.pm = pm;
+	}
+
+	public void setListener(Listener listener){
 		this.listener = listener;
 	}
 
@@ -51,9 +54,8 @@ class StorageCapacityManager {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						int capacity = storagecapacityitems[which].getValue();
-						if(pm.getCount() <= capacity) {
-							set(context, capacity);
-							shrink(context, capacity);
+						set(context, capacity);
+						if(shrink(context, capacity)) {
 							if (listener != null) {
 								listener.onResetCapacity(capacity);
 							}
@@ -61,7 +63,7 @@ class StorageCapacityManager {
 						dialog.dismiss();
 					}
 
-					private void shrink(Context context, int capacity){
+					private boolean shrink(Context context, int capacity){
 						String[] files = context.fileList();
 						if(files.length > capacity){
 							Arrays.sort(files, new Comparator<String>() {
@@ -78,7 +80,9 @@ class StorageCapacityManager {
 									--cnt;
 								}
 							}
+							return true;
 						}
+						return false;
 					}
 				})
 				.setNegativeButton(context.getResources().getString(R.string.string_cancel), null)

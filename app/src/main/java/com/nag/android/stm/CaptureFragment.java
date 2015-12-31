@@ -27,7 +27,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class CaptureFragment extends Fragment implements OnClickListener, SurfaceHolder.Callback, PictureCallback,AutoFocusCallback, OnItemClickListener,Camera.ShutterCallback, MenuHandler.Listener, StorageCapacityManager.Listener {
+public class CaptureFragment extends Fragment implements OnClickListener, SurfaceHolder.Callback, PictureCallback,AutoFocusCallback, OnItemClickListener,Camera.ShutterCallback, MenuHandler.Listener {
 	public static CaptureFragment newInstance(){
 		final CaptureFragment instance = new CaptureFragment();
 		return instance;
@@ -41,13 +41,22 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		menuhandler = new MenuHandler(getActivity(), this, this);
 		setHasOptionsMenu(true);
 	}
- 
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
+		menuhandler = ((MainActivity)getActivity()).getMenuHandler();
+		menuhandler.setListener(this);
+		menuhandler.setListener(new StorageCapacityManager.Listener(){
+			@Override
+			public void onResetCapacity(int size) {
+				adapter.resetCapacity(getActivity());
+			}
+		});
+		menuhandler.setFilename(null);
+
 		View rootView = inflater.inflate(getLayoutID(getActivity()), container, false);
 		SurfaceView preview=(SurfaceView)rootView.findViewById(R.id.surfaceView);
 		SurfaceHolder holder = preview.getHolder();
@@ -146,23 +155,18 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	public void onShutter() {
 	}
 
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		inflater.inflate(R.menu.capture, menu);
-	}
+//	@Override
+//	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+//		inflater.inflate(R.menu.capture, menu);
+//	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		if(menuhandler.onOptionsItemSelected(getActivity(), null, item)){
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
-	}
-
-	@Override
-	public void onResetCapacity(int size) {
-		adapter.resetCapacity(getActivity());
-	}
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//		if(menuhandler.onOptionsItemSelected(getActivity(), null, item)){
+//			return true;
+//		}
+//		return super.onOptionsItemSelected(item);
+//	}
 
 	@Override
 	public Camera getCamera() {

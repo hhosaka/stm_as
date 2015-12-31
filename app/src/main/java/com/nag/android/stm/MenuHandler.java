@@ -47,22 +47,29 @@ public class MenuHandler {
 	private final PreferenceHelper ph;
 	private final ProtectManager protectmanager;
 	private final StorageCapacityManager scm;
-	private final Listener listener;
+	private Listener listener;
+	private String filename = null;
+	private MenuItem itemProtect = null;
 
-	MenuHandler(Context context, Listener listener, StorageCapacityManager.Listener scmlistener){
+	MenuHandler(Context context){
 		assert(listener!=null);
-		this.listener = listener;
 		ph = PreferenceHelper.getInstance(context);
 		protectmanager = new ProtectManager(ph);
-		scm = new StorageCapacityManager(ph, protectmanager, scmlistener);
+		scm = new StorageCapacityManager(ph, protectmanager);
 
+	}
+
+	void setListener(Listener listener){
+		this.listener = listener;
+	}
+
+	void setListener(StorageCapacityManager.Listener listener){
+		scm.setListener(listener);
 	}
 
 	private boolean isProtectAvailable(Context context){
 		return protectmanager.getCount() < scm.get(context) - 1;
 	}
-
-	MenuItem itemProtect = null;
 
 	private void setProtectStatus(Context context, String filename){
 		if (itemProtect != null) {
@@ -72,10 +79,22 @@ public class MenuHandler {
 		}
 	}
 
-	public void initialize(Context context, Menu menu, String filename){
-		if(filename!=null) {
+	public void setFilename(String filename){
+		this.filename = filename;
+	}
+
+	public void initialize(Context context, Menu menu){
+		if(filename != null) {
+			menu.findItem(R.id.action_protected).setVisible(true);
+			menu.findItem(R.id.action_export).setVisible(true);
+			menu.findItem(R.id.action_send_mail).setVisible(true);
 			itemProtect = (MenuItem) menu.findItem(R.id.action_protected);
 			setProtectStatus(context, filename);
+		}else{
+			menu.findItem(R.id.action_protected).setVisible(false);
+			menu.findItem(R.id.action_export).setVisible(false);
+			menu.findItem(R.id.action_send_mail).setVisible(false);
+			itemProtect = null;
 		}
 	}
 
@@ -136,7 +155,7 @@ public class MenuHandler {
 		context.startActivity(intent);
 	}
 
-	public boolean onOptionsItemSelected(Context context, String filename, MenuItem menuitem){
+	public boolean onOptionsItemSelected(Context context, MenuItem menuitem){
 		switch (menuitem.getItemId()){
 		case R.id.action_protected:
 			if(menuitem.isChecked()){
@@ -200,8 +219,6 @@ public class MenuHandler {
 	public String getFlashMode(Context context){
 		return PreferenceHelper.getInstance(context).getString(PREF_FLASH_MODE, Camera.Parameters.FLASH_MODE_AUTO);
 	}
-
-
 
 	private void selectPictureSize(final Context context){
 		Camera camera = listener.getCamera();

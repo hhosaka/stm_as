@@ -33,13 +33,11 @@ public class ReviewFragment extends Fragment implements TranslationGestureDetect
 	private float prev_scale = 0.0f;
 	private float cx, cy;
 	private float px, py;
-	private String filename;
 //	protected MenuItem menuitem_protect = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		menuhandler = new MenuHandler(getActivity(), this, this);
 		setHasOptionsMenu(true);
 	}
  
@@ -77,9 +75,9 @@ public static ReviewFragment newInstance(){
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		Context context = getActivity();
-		InternalView rootView = new InternalView(context);
-		sgd = new ScaleGestureDetector(context,
+		MainActivity main_activity = (MainActivity)getActivity();
+		InternalView rootView = new InternalView(main_activity);
+		sgd = new ScaleGestureDetector(main_activity,
 				new ScaleGestureDetector.SimpleOnScaleGestureListener() {
 					@Override
 					public boolean onScaleBegin(ScaleGestureDetector detector) {
@@ -100,15 +98,16 @@ public static ReviewFragment newInstance(){
 
 		try{
 			boolean test;
-			filename = getArguments().getString(ARG_FILENAME);
+			String filename = getArguments().getString(ARG_FILENAME);
+			main_activity.getMenuHandler().setFilename(filename);
 //			menuitem_protect.setChecked(test = ProtectManager.getInstance(getActivity()).isProtected(filename));
-			InputStream in = context.openFileInput(filename);
+			InputStream in = main_activity.openFileInput(filename);
 			Bitmap org = BitmapFactory.decodeStream(in);
 			rootView.setBitmap(org);
 			in.close();
 		}catch(Exception e){
-			rootView.setBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher));
-			Toast.makeText(context, e.getMessage(), Toast.LENGTH_LONG).show();
+			rootView.setBitmap(BitmapFactory.decodeResource(main_activity.getResources(), R.drawable.ic_launcher));
+			Toast.makeText(main_activity, e.getMessage(), Toast.LENGTH_LONG).show();
 		}
 		setHasOptionsMenu(true);
 		return rootView;
@@ -228,21 +227,21 @@ public static ReviewFragment newInstance(){
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		inflater.inflate(R.menu.review, menu);
-		menuhandler.initialize(getActivity(), menu, filename);
-		super.onCreateOptionsMenu(menu, inflater);
+//		inflater.inflate(R.menu.review, menu);
+//		menuhandler.initialize(getActivity(), menu, filename);
+//		super.onCreateOptionsMenu(menu, inflater);
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch(item.getItemId()){
-		default:
-			if(menuhandler.onOptionsItemSelected(getActivity(), filename, item)){
-				return true;
-			}
-		}
-		return super.onOptionsItemSelected(item);
-	}
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//		switch(item.getItemId()){
+//		default:
+//			if(menuhandler.onOptionsItemSelected(getActivity(), filename, item)){
+//				return true;
+//			}
+//		}
+//		return super.onOptionsItemSelected(item);
+//	}
 
 	@Override
 	public void onUpdateFlash(String mode) {
