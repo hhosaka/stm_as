@@ -59,7 +59,7 @@ public class MenuHandler {
 	}
 
 	private boolean isProtectAvailable(Context context){
-		return protectmanager.getCount() < scm.get(context);
+		return protectmanager.getCount() < scm.get(context) - 1;
 	}
 
 	MenuItem itemProtect = null;

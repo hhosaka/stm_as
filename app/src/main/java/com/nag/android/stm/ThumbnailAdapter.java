@@ -4,6 +4,7 @@ import com.nag.android.util.PreferenceHelper;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -91,8 +92,10 @@ class ThumbnailAdapter extends ArrayAdapter<ThumbnailInfo>{
 			 convertView = inflater.inflate(getLayoutID(), parent, false);
 		}
 		((ImageView)convertView.findViewById(R.id.imageViewThumbnail)).setImageBitmap(info.getThumbnail());
-		((TextView)convertView.findViewById(R.id.textViewLabel)).setText(info.getLabel());
-		
+
+		TextView label = ((TextView)convertView.findViewById(R.id.textViewLabel));
+		label.setText(info.getLabel());
+		label.setBackgroundColor(pm.isProtected(info.getFilename()) ? Color.RED: Color.BLACK);
 		return convertView;
 	}
 
