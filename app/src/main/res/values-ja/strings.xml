@@ -21,5 +21,8 @@
     <string name="action_thumbnail_location">サムネイルの配置</string>
     <string name="string_cancel">キャンセル</string>
     <string name="string_taking_picture">撮影中</string>
+    <string name="message_exported">エクスポートしました： </string>
+    <string name="string_email_subject">S.T.M.（短期記憶）から送信 </string>
+    <string name="error_fail_to_export_file">エクスポートに失敗しました。</string>
     <string name="admob_id">"ca-app-pub-4043672088061308/9976545276"</string>
 </resources>

@@ -18,7 +18,6 @@ import android.view.View;
 public class MainActivity extends Activity {
 
 	private PreferenceHelper ph;
-	private ProtectManager pm;
 	private StorageCapacityManager scm;
 	private MenuHandler menuhandler;
 	@Override
@@ -27,8 +26,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 		ph = PreferenceHelper.getInstance(this);
-		pm = new ProtectManager(ph);
-		scm = new StorageCapacityManager(ph, pm);
+		scm = new StorageCapacityManager(ph);
 		menuhandler = new MenuHandler(this);
 
 		FragmentManager manager = getFragmentManager();
@@ -57,10 +55,5 @@ public class MainActivity extends Activity {
 	@Override
 	public void openOptionsMenu() {
 		super.openOptionsMenu();
-	}
-
-	public void onCreateOptionsMenu()
-	{
-
 	}
 }

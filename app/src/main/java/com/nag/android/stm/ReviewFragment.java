@@ -24,7 +24,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-public class ReviewFragment extends Fragment implements TranslationGestureDetector.TranslationGestureListener,MenuHandler.Listener, StorageCapacityManager.Listener{
+public class ReviewFragment extends Fragment implements TranslationGestureDetector.TranslationGestureListener{
 
 	private ScaleGestureDetector sgd;
 	private TranslationGestureDetector tgd;
@@ -33,14 +33,13 @@ public class ReviewFragment extends Fragment implements TranslationGestureDetect
 	private float prev_scale = 0.0f;
 	private float cx, cy;
 	private float px, py;
-//	protected MenuItem menuitem_protect = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setHasOptionsMenu(true);
 	}
- 
+
 	@Override
 	public void onTranslationEnd(float x, float y) {
 	}
@@ -59,7 +58,7 @@ public class ReviewFragment extends Fragment implements TranslationGestureDetect
 		py = y;
 	}
 
-public static ReviewFragment newInstance(){
+	public static ReviewFragment newInstance(){
 		final ReviewFragment instance = new ReviewFragment();
 		return instance;
 	}
@@ -70,6 +69,7 @@ public static ReviewFragment newInstance(){
 		matrix = new Matrix();
 	}
 
+	Bitmap org = null;
 //	private Point size;
 	public static final String ARG_FILENAME = "filename";
 	@Override
@@ -102,7 +102,7 @@ public static ReviewFragment newInstance(){
 			main_activity.getMenuHandler().setFilename(filename);
 //			menuitem_protect.setChecked(test = ProtectManager.getInstance(getActivity()).isProtected(filename));
 			InputStream in = main_activity.openFileInput(filename);
-			Bitmap org = BitmapFactory.decodeStream(in);
+			org = BitmapFactory.decodeStream(in);
 			rootView.setBitmap(org);
 			in.close();
 		}catch(Exception e){
@@ -111,6 +111,12 @@ public static ReviewFragment newInstance(){
 		}
 		setHasOptionsMenu(true);
 		return rootView;
+	}
+
+	@Override
+	public void onDestroy() {
+		if(org!=null){org.recycle();}
+		super.onDestroy();
 	}
 
 	private class InternalView extends SurfaceView implements SurfaceHolder.Callback, OnTouchListener{
@@ -143,11 +149,7 @@ public static ReviewFragment newInstance(){
  
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
-			bitmap.recycle();
-			if(camera!=null){
-				camera.release();
-				camera = null;
-			}
+//			bitmap.recycle();
 		}
 
 		private void present(float x, float y){
@@ -224,48 +226,4 @@ public static ReviewFragment newInstance(){
 			return super.performClick();
 		}
 	}
-
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-//		inflater.inflate(R.menu.review, menu);
-//		menuhandler.initialize(getActivity(), menu, filename);
-//		super.onCreateOptionsMenu(menu, inflater);
-	}
-
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-//		switch(item.getItemId()){
-//		default:
-//			if(menuhandler.onOptionsItemSelected(getActivity(), filename, item)){
-//				return true;
-//			}
-//		}
-//		return super.onOptionsItemSelected(item);
-//	}
-
-	@Override
-	public void onUpdateFlash(String mode) {
-		// Do Nothing
-	}
-
-	@Override
-	public void onResetCapacity(int size) {
-		// Do Nothing
-	}
-
-	Camera camera = null;
-	@Override
-	public Camera getCamera() {
-		if(camera==null){
-			camera = Camera.open();
-		}
-		return camera;
-	}
-
-	@Override
-	public void onUpdateThumbnailSide(int side) {
-		// Do Nothing
-	}
-
-	
 }

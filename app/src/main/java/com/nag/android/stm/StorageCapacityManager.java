@@ -14,29 +14,43 @@ import java.util.Comparator;
 import java.util.List;
 
 class StorageCapacityManager {
-	interface Listener{
-		void onResetCapacity(int capacity);
-	}
 	private static final String PREF_STORAGE_CAPACITY = "storage_capacity";
 	private final PreferenceHelper ph;
 	private final ProtectManager pm;
-	private Listener listener;
+	private StorageEventListener listener;
 
-	StorageCapacityManager(PreferenceHelper ph, ProtectManager pm){
+	StorageCapacityManager(PreferenceHelper ph){
 		this.ph = ph;
-		this.pm = pm;
+		this.pm = new ProtectManager(ph);
 	}
 
-	public void setListener(Listener listener){
+	public void setListener(StorageEventListener listener){
 		this.listener = listener;
 	}
 
-	public void set(Context context, int capacity) {
+	private void set(int capacity) {
 		ph.putInt(PREF_STORAGE_CAPACITY, capacity);
 	}
-	public int get(Context context){
+	private int get(){
 		return ph.getInt(PREF_STORAGE_CAPACITY, 10);
 	}
+
+	void setProtected(String filename, boolean protect){
+		if(protect){
+			pm.add(filename);
+		}else{
+			pm.remove(filename);
+		}
+	}
+
+	boolean isProtected(String filename){
+		return pm.isProtected(filename);
+	}
+
+	boolean isProtectAvailable(){
+		return pm.getCount() < get() - 1;
+	}
+
 	public void select(final Context context){
 		int protectnum = pm.getCount();
 
@@ -46,15 +60,13 @@ class StorageCapacityManager {
 		if(protectnum < 20){temp.add(new LabeledIntItem(context.getResources().getString(R.string.action_storage_capacity_20),20));}
 		final LabeledIntItem[] storagecapacityitems = temp.toArray(new LabeledIntItem[0]);
 
-		int size = get(context);
-
 		new AlertDialog.Builder(context)
 				.setTitle(context.getResources().getString(R.string.action_storage_capacity))
-				.setSingleChoiceItems(storagecapacityitems, LabeledItem.indexOf(storagecapacityitems, Integer.valueOf(size)), new DialogInterface.OnClickListener(){
+				.setSingleChoiceItems(storagecapacityitems, LabeledItem.indexOf(storagecapacityitems, Integer.valueOf(get())), new DialogInterface.OnClickListener(){
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						int capacity = storagecapacityitems[which].getValue();
-						set(context, capacity);
+						set(capacity);
 						if(shrink(context, capacity)) {
 							if (listener != null) {
 								listener.onResetCapacity(capacity);
@@ -88,5 +100,4 @@ class StorageCapacityManager {
 				.setNegativeButton(context.getResources().getString(R.string.string_cancel), null)
 				.show();
 	}
-
 }

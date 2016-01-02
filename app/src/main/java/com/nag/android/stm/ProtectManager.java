@@ -7,17 +7,11 @@ import com.nag.android.util.PreferenceHelper;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by ddiamond on 2015/12/09.
- */
-
 public class ProtectManager {
 	private static final String PROP_PROTECTED_FILE = "protected_file";
 	private static final String PROP_PROTECTED_FILE_COUNT = "protected_file_count";
 	private static int MAX_PROP = 999;
 	private final PreferenceHelper ph;
-	private final Map<Integer,String> dic = new HashMap<Integer,String>();
-
 
 	ProtectManager(PreferenceHelper ph){
 		this.ph = ph;

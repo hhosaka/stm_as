@@ -6,11 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Comparator;
-import java.util.List;
 
 import android.app.AlertDialog;
 import android.content.ContentResolver;
@@ -29,54 +25,31 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.nag.android.util.LabeledIntItem;
 import com.nag.android.util.LabeledItem;
 import com.nag.android.util.LabeledStringItem;
 import com.nag.android.util.PreferenceHelper;
 
 public class MenuHandler {
-	public interface Listener{
-		void onUpdateFlash(String mode);
-		Camera getCamera();
-		void onUpdateThumbnailSide(int side);
-	}
 
 	private static final String PREF_FLASH_MODE = "flash_mode";
 	private static final String PREF_PICTURE_SIZE = "picture_size";
 	private static final String PREF_THUMBNAIL_LOCATION = "thumbnail_location";
 	private final PreferenceHelper ph;
-	private final ProtectManager protectmanager;
+//	private final ProtectManager protectmanager;
 	private final StorageCapacityManager scm;
-	private Listener listener;
+	private CaptureListener capture_listener;
 	private String filename = null;
-	private MenuItem itemProtect = null;
 
 	MenuHandler(Context context){
-		assert(listener!=null);
+		assert(capture_listener !=null);
 		ph = PreferenceHelper.getInstance(context);
-		protectmanager = new ProtectManager(ph);
-		scm = new StorageCapacityManager(ph, protectmanager);
+		scm = new StorageCapacityManager(ph);
 
 	}
 
-	void setListener(Listener listener){
-		this.listener = listener;
-	}
-
-	void setListener(StorageCapacityManager.Listener listener){
-		scm.setListener(listener);
-	}
-
-	private boolean isProtectAvailable(Context context){
-		return protectmanager.getCount() < scm.get(context) - 1;
-	}
-
-	private void setProtectStatus(Context context, String filename){
-		if (itemProtect != null) {
-			boolean isProtected = protectmanager.isProtected(filename);
-			itemProtect.setEnabled(isProtected || isProtectAvailable(context));
-			itemProtect.setChecked(isProtected);
-		}
+	void setCaptureListener(CaptureListener listener, StorageEventListener slistener){
+		capture_listener = listener;
+		scm.setListener(slistener);
 	}
 
 	public void setFilename(String filename){
@@ -86,20 +59,23 @@ public class MenuHandler {
 	public void initialize(Context context, Menu menu){
 		if(filename != null) {
 			menu.findItem(R.id.action_protected).setVisible(true);
+			setProtectStatus(menu.findItem(R.id.action_protected), scm.isProtected(filename));
 			menu.findItem(R.id.action_export).setVisible(true);
 			menu.findItem(R.id.action_send_mail).setVisible(true);
-			itemProtect = (MenuItem) menu.findItem(R.id.action_protected);
-			setProtectStatus(context, filename);
+			menu.findItem(R.id.action_flash_setting).setVisible(false);
+			menu.findItem(R.id.action_picture_size).setVisible(false);
+			menu.findItem(R.id.action_thumbnail_location).setVisible(false);
 		}else{
 			menu.findItem(R.id.action_protected).setVisible(false);
 			menu.findItem(R.id.action_export).setVisible(false);
 			menu.findItem(R.id.action_send_mail).setVisible(false);
-			itemProtect = null;
+			menu.findItem(R.id.action_flash_setting).setVisible(true);
+			menu.findItem(R.id.action_picture_size).setVisible(true);
+			menu.findItem(R.id.action_thumbnail_location).setVisible(true);
 		}
 	}
 
 	private static void copy(FileInputStream src, FileOutputStream dest) throws IOException{
-
 		FileChannel srcChannel = src.getChannel();
 		FileChannel destChannel = dest.getChannel();
 
@@ -135,8 +111,9 @@ public class MenuHandler {
 
 		try {
 			copy(context.openFileInput(filename), new FileOutputStream(imgPath));
+			Toast.makeText(context, context.getString(R.string.message_exported) + filename, Toast.LENGTH_LONG).show();
 		}catch(IOException e) {
-			Toast.makeText(context, "fail to copy file", Toast.LENGTH_LONG);
+			Toast.makeText(context, context.getString(R.string.error_fail_to_export_file), Toast.LENGTH_LONG).show();
 		}
 		registAndroidDB(context, imgPath);
 		return imgPath;
@@ -147,25 +124,24 @@ public class MenuHandler {
 		String imgPath = export(context, filename);
 		Intent intent = new Intent();
 		intent.setAction(Intent.ACTION_SEND);
-//		intent.putExtra(Intent.EXTRA_EMAIL, new String[] {"test@exsample.com"});
-		intent.putExtra(Intent.EXTRA_SUBJECT, "picture from s.t.m.");
+		intent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.string_email_subject));
 		intent.putExtra(Intent.EXTRA_TEXT, filename);
 		intent.setType("text/plain");
 		intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(imgPath)));
 		context.startActivity(intent);
 	}
 
+	private void setProtectStatus(MenuItem item, boolean is_protected){
+		item.setEnabled(is_protected || scm.isProtectAvailable());
+		item.setChecked(is_protected);
+	}
+
 	public boolean onOptionsItemSelected(Context context, MenuItem menuitem){
 		switch (menuitem.getItemId()){
 		case R.id.action_protected:
-			if(menuitem.isChecked()){
-				protectmanager.remove(filename);
-				menuitem.setChecked(false);
-			}else{
-				protectmanager.add(filename);
-				menuitem.setChecked(true);
-			}
-			setProtectStatus(context, filename);
+			boolean is_protected = !menuitem.isChecked();
+			scm.setProtected(filename, is_protected );
+			setProtectStatus(menuitem, is_protected);
 			return true;
 		case R.id.action_export:
 			export(context, filename);
@@ -200,15 +176,15 @@ public class MenuHandler {
 				new LabeledStringItem(context.getResources().getString(R.string.action_flash_auto),Camera.Parameters.FLASH_MODE_AUTO)
 		};
 
-		String mode = PreferenceHelper.getInstance(context).getString(PREF_FLASH_MODE, Camera.Parameters.FLASH_MODE_AUTO);
+		String mode = ph.getString(PREF_FLASH_MODE, Camera.Parameters.FLASH_MODE_AUTO);
 		new AlertDialog.Builder(context)
 		.setTitle(context.getResources().getString(R.string.action_flash))
 		.setSingleChoiceItems(items, LabeledItem.indexOf(items,mode), new OnClickListener(){
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				String mode = items[which].getValue();
-				PreferenceHelper.getInstance(context).putString(PREF_FLASH_MODE, mode);
-				listener.onUpdateFlash(mode);
+				ph.putString(PREF_FLASH_MODE, mode);
+				capture_listener.onUpdateFlash(mode);
 				dialog.dismiss();
 			}
 		})
@@ -217,11 +193,11 @@ public class MenuHandler {
 	}
 
 	public String getFlashMode(Context context){
-		return PreferenceHelper.getInstance(context).getString(PREF_FLASH_MODE, Camera.Parameters.FLASH_MODE_AUTO);
+		return ph.getString(PREF_FLASH_MODE, Camera.Parameters.FLASH_MODE_AUTO);
 	}
 
 	private void selectPictureSize(final Context context){
-		Camera camera = listener.getCamera();
+		Camera camera = capture_listener.getCamera();
 		Size[] sizes = camera.getParameters().getSupportedPictureSizes().toArray(new Size[0]);
 		final SizeItem[] items=new SizeItem[sizes.length];
 		Size currentsize = camera.getParameters().getPictureSize();
@@ -239,9 +215,9 @@ public class MenuHandler {
 			public void onClick(DialogInterface dialog, int which) {
 				SizeItem item = items[which];
 				PreferenceHelper.getInstance(context).putString(PREF_PICTURE_SIZE, item.toString());
-				Camera.Parameters params = listener.getCamera().getParameters();
+				Camera.Parameters params = capture_listener.getCamera().getParameters();
 				params.setPictureSize(item.getSize().x, item.getSize().y);
-				listener.getCamera().setParameters(params);
+				capture_listener.getCamera().setParameters(params);
 				dialog.dismiss();
 			}
 		})
@@ -254,7 +230,7 @@ public class MenuHandler {
 		if(buf!=null){
 			return new SizeItem(buf).getSize();
 		}else{
-			Size size = getMinimumSize(listener.getCamera().getParameters().getSupportedPictureSizes().toArray(new Size[0]));
+			Size size = getMinimumSize(capture_listener.getCamera().getParameters().getSupportedPictureSizes().toArray(new Size[0]));
 			return new Point(size.width, size.height);
 		}
 	}
@@ -279,13 +255,13 @@ public class MenuHandler {
 			};
 		new AlertDialog.Builder(context)
 		.setTitle(context.getResources().getString(R.string.action_thumbnail_location))
-		.setSingleChoiceItems(items, getThumbnailSide(context)?0:1, new OnClickListener(){
+		.setSingleChoiceItems(items, getThumbnailSide()?0:1, new OnClickListener(){
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				LabeledItem<Integer> item = (LabeledItem<Integer>)items[which];
 				PreferenceHelper.getInstance(context).putBoolean(PREF_THUMBNAIL_LOCATION, item.getValue()==0);
 				ThumbnailAdapter.reset();
-				listener.onUpdateThumbnailSide(item.getValue());
+				capture_listener.onUpdateThumbnailSide(item.getValue());
 				dialog.dismiss();
 			}
 		})
@@ -293,7 +269,7 @@ public class MenuHandler {
 		.show();
 	}
 	
-	public boolean getThumbnailSide(Context context){
-		return PreferenceHelper.getInstance(context).getBoolean(PREF_THUMBNAIL_LOCATION, true);
+	public boolean getThumbnailSide(){
+		return ph.getBoolean(PREF_THUMBNAIL_LOCATION, true);
 	}
 }

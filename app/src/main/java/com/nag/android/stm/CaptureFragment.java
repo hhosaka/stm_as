@@ -27,7 +27,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class CaptureFragment extends Fragment implements OnClickListener, SurfaceHolder.Callback, PictureCallback,AutoFocusCallback, OnItemClickListener,Camera.ShutterCallback, MenuHandler.Listener {
+public class CaptureFragment extends Fragment implements OnClickListener, SurfaceHolder.Callback, PictureCallback,AutoFocusCallback, OnItemClickListener,Camera.ShutterCallback, CaptureListener, StorageEventListener {
 	public static CaptureFragment newInstance(){
 		final CaptureFragment instance = new CaptureFragment();
 		return instance;
@@ -36,7 +36,6 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	private Camera camera = null;
 	private ThumbnailAdapter adapter = null;
 	private Button shutter;
-	private MenuHandler menuhandler;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -47,24 +46,18 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		menuhandler = ((MainActivity)getActivity()).getMenuHandler();
-		menuhandler.setListener(this);
-		menuhandler.setListener(new StorageCapacityManager.Listener(){
-			@Override
-			public void onResetCapacity(int size) {
-				adapter.resetCapacity(getActivity());
-			}
-		});
+		MenuHandler menuhandler = ((MainActivity)getActivity()).getMenuHandler();
+		menuhandler.setCaptureListener(this, this);
 		menuhandler.setFilename(null);
 
-		View rootView = inflater.inflate(getLayoutID(getActivity()), container, false);
+		View rootView = inflater.inflate(getLayoutID(menuhandler.getThumbnailSide()), container, false);
 		SurfaceView preview=(SurfaceView)rootView.findViewById(R.id.surfaceView);
 		SurfaceHolder holder = preview.getHolder();
 		holder.addCallback(this);
 		ListView thumbnail = (ListView)rootView.findViewById(R.id.listViewThumbnail);
 		Point size=new Point();
 		getActivity().getWindowManager().getDefaultDisplay().getSize(size);
-		adapter = ThumbnailAdapter.getInstance(getActivity(), menuhandler.getThumbnailSide(getActivity()), size);
+		adapter = ThumbnailAdapter.getInstance(getActivity(), menuhandler.getThumbnailSide(), size);
 		thumbnail.setAdapter(adapter);// TODO
 		thumbnail.setOnItemClickListener(this);
 		shutter =(Button) rootView.findViewById(R.id.buttonTakePicture);
@@ -72,8 +65,8 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 		return rootView;
 	}
 
-	private int getLayoutID(Context context){
-		if(menuhandler.getThumbnailSide(context)){
+	private int getLayoutID(boolean side){
+		if(side){
 			return R.layout.fragment_preview_right;
 		}else{
 			return R.layout.fragment_preview_left;
@@ -101,6 +94,7 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
+		MenuHandler menuhandler = ((MainActivity)getActivity()).getMenuHandler();
 		camera = Camera.open();
 		camera.setDisplayOrientation(90);
 		Camera.Parameters params = camera.getParameters();
@@ -155,19 +149,6 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	public void onShutter() {
 	}
 
-//	@Override
-//	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-//		inflater.inflate(R.menu.capture, menu);
-//	}
-
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-//		if(menuhandler.onOptionsItemSelected(getActivity(), null, item)){
-//			return true;
-//		}
-//		return super.onOptionsItemSelected(item);
-//	}
-
 	@Override
 	public Camera getCamera() {
 		return camera;
@@ -179,5 +160,9 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 		FragmentTransaction t = manager.beginTransaction();
 		t.replace(R.id.fragmentMain, new CaptureFragment());
 		t.commit();
+	}
+	@Override
+	public void onResetCapacity(int size) {
+		adapter.resetCapacity(getActivity());
 	}
 }

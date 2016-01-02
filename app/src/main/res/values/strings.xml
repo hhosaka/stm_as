@@ -21,5 +21,8 @@
     <string name="action_thumbnail_location">Thumbnail Location</string>
     <string name="string_cancel">Cancel</string>
     <string name="string_taking_picture">Taking Picture</string>
+    <string name="message_exported">Exported to </string>
+    <string name="string_email_subject">Picture from s.t.m. </string>
+    <string name="error_fail_to_export_file">Fail to export file</string>
     <string name="admob_id">"ca-app-pub-4043672088061308/9976545276"</string>
 </resources>
