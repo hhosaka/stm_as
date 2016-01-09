@@ -94,22 +94,21 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
-		MenuHandler menuhandler = ((MainActivity)getActivity()).getMenuHandler();
-		camera = Camera.open();
-		camera.setDisplayOrientation(90);
-		Camera.Parameters params = camera.getParameters();
-		Point picturesize = menuhandler.getPictureSize(getActivity());
-		params.setPictureSize(picturesize.x, picturesize.y);
-		Size previewsize = menuhandler.getMinimumSize(camera.getParameters().getSupportedPreviewSizes().toArray(new Size[0]));
-		params.setPreviewSize(previewsize.width, previewsize.height);
-		params.setFlashMode(menuhandler.getFlashMode(getActivity()));
-		camera.setParameters(params);
-		previewsize = camera.getParameters().getPreviewSize();
 		try {
+			MenuHandler menuhandler = ((MainActivity) getActivity()).getMenuHandler();
+			camera = Camera.open();
+			camera.setDisplayOrientation(90);
+			Camera.Parameters params = camera.getParameters();
+			Point picturesize = menuhandler.getPictureSize(getActivity());
+			params.setPictureSize(picturesize.x, picturesize.y);
+			Size previewsize = menuhandler.getMinimumSize(camera.getParameters().getSupportedPreviewSizes().toArray(new Size[0]));
+			params.setPreviewSize(previewsize.width, previewsize.height);
+			params.setFlashMode(menuhandler.getFlashMode(getActivity()));
+			camera.setParameters(params);
+			previewsize = camera.getParameters().getPreviewSize();
 			camera.setPreviewDisplay(holder);
-		} catch (IOException e) {
-			Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
-			e.printStackTrace();
+		}catch(Exception e){
+			Toast.makeText(getActivity(), R.string.error_fail_to_open_camera, Toast.LENGTH_LONG).show();
 		}
 	}
 
