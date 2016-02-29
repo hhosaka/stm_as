@@ -33,9 +33,13 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 		return instance;
 	}
 
-	private Camera camera = null;
+//	private Camera camera = null;
 	private ThumbnailAdapter adapter = null;
 	private Button shutter;
+
+	private Camera getCamera(){
+		return ((MainActivity)getActivity()).getCamera();
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -77,29 +81,31 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	public void onClick(View v) {
 		shutter.setOnClickListener(null);
 		getView().findViewById(R.id.textViewTaking).setVisibility(View.VISIBLE);
-		camera.autoFocus(CaptureFragment.this);
+		getCamera().autoFocus(CaptureFragment.this);
 	}
 
 	@Override
 	public void onUpdateFlash(String mode) {
-		Camera.Parameters params = camera.getParameters();
+		Camera.Parameters params = getCamera().getParameters();
 		params.setFlashMode(mode);
-		camera.setParameters(params);
+		getCamera().setParameters(params);
 	}
 
 	@Override
 	public void onAutoFocus(boolean arg0, Camera arg1) {
-		camera.takePicture(this, null, CaptureFragment.this);
+		getCamera().takePicture(this, null, CaptureFragment.this);
 	}
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
+		Logger.write(getActivity(), "serfaceCreated");
 		try {
 			MenuHandler menuhandler = ((MainActivity) getActivity()).getMenuHandler();
-			camera = Camera.open();
+//			camera = Camera.open();
+			Camera camera = getCamera();
 			camera.setDisplayOrientation(90);
 			Camera.Parameters params = camera.getParameters();
-			Point picturesize = menuhandler.getPictureSize(getActivity());
+			Point picturesize = menuhandler.getPictureSize(getActivity(), getCamera());
 			params.setPictureSize(picturesize.x, picturesize.y);
 			Size previewsize = menuhandler.getMinimumSize(camera.getParameters().getSupportedPreviewSizes().toArray(new Size[0]));
 			params.setPreviewSize(previewsize.width, previewsize.height);
@@ -107,7 +113,7 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 			camera.setParameters(params);
 			previewsize = camera.getParameters().getPreviewSize();
 			camera.setPreviewDisplay(holder);
-		}catch(Exception e){
+		} catch (Exception e) {
 			Toast.makeText(getActivity(), R.string.error_fail_to_open_camera, Toast.LENGTH_LONG).show();
 		}
 	}
@@ -128,12 +134,15 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-		camera.startPreview();
+		Logger.write(getActivity(), "serfaceChanged");
+		getCamera().startPreview();
 	}
 	@Override
 	public void surfaceDestroyed(SurfaceHolder arg0) {
-		camera.stopPreview();
-		camera.release();
+		Logger.write(getActivity(), "serfaceDestroyed");
+		getCamera().stopPreview();
+//		camera.release();
+//		camera = null;
 	}
 
 	@Override
@@ -148,10 +157,10 @@ public class CaptureFragment extends Fragment implements OnClickListener, Surfac
 	public void onShutter() {
 	}
 
-	@Override
-	public Camera getCamera() {
-		return camera;
-	}
+//	@Override
+//	public Camera getCamera() {
+//		return camera;
+//	}
 
 	@Override
 	public void onUpdateThumbnailSide(int side) {

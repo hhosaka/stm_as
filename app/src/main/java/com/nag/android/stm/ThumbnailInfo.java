@@ -16,6 +16,7 @@ import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Bitmap.CompressFormat;
+import android.widget.Toast;
 
 public class ThumbnailInfo {
 //	private final int THUMBNAIL_SIZE = 128;
@@ -57,12 +58,18 @@ public class ThumbnailInfo {
 		return bmp;
 	}
 
-	private Bitmap createThumbnail(Context context, Point size, String filename){
+	private Bitmap createThumbnail(Context context, Point size, String filename) {
 		InputStream in;
 		try {
 			in = context.openFileInput(filename);
-			return createThumbnail(context, size, BitmapFactory.decodeStream(in));
+			Bitmap ret = createThumbnail(context, size, BitmapFactory.decodeStream(in));
+			in.close();
+			return ret;
 		} catch (FileNotFoundException e) {
+			Toast.makeText(context, "File Not Found",Toast.LENGTH_LONG);
+			return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher);
+		} catch (IOException e) {
+			Toast.makeText(context, "File IO error",Toast.LENGTH_LONG);
 			return BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher);
 		}
 	}

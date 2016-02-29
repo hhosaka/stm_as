@@ -4,6 +4,6 @@ import android.hardware.Camera;
 
 interface CaptureListener {
 	void onUpdateFlash(String mode);
-	Camera getCamera();
+//	Camera getCamera();
 	void onUpdateThumbnailSide(int side);
 }

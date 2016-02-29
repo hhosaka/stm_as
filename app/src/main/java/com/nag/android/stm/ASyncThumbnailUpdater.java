@@ -27,8 +27,10 @@ public class ASyncThumbnailUpdater extends AsyncTask<Context,ThumbnailInfo,Void>
 			}
 		});
 		for(String filename : files){
-			synchronized(ASyncPictureUpdater.lock){
-				this.publishProgress(new ThumbnailInfo(context[0], size, filename));
+			if(filename.substring(filename.length() - 4).toUpperCase().equals(".JPG")){
+				synchronized(ASyncPictureUpdater.lock) {
+					this.publishProgress(new ThumbnailInfo(context[0], size, filename));
+				}
 			}
 		}
 		return null;

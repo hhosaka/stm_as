@@ -23,6 +23,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.nag.android.util.LabeledItem;
@@ -136,7 +137,7 @@ public class MenuHandler {
 		item.setChecked(is_protected);
 	}
 
-	public boolean onOptionsItemSelected(Context context, MenuItem menuitem){
+	public boolean onOptionsItemSelected(Context context, Camera camera, MenuItem menuitem){
 		switch (menuitem.getItemId()){
 		case R.id.action_protected:
 			boolean is_protected = !menuitem.isChecked();
@@ -156,13 +157,20 @@ public class MenuHandler {
 			scm.select(context);
 			return true;
 		case R.id.action_picture_size:
-			selectPictureSize(context);
+			selectPictureSize(context, camera);
 			return true;
 		case R.id.action_thumbnail_location:
 			selectThumbnailSide(context);
 			return true;
 		case R.id.action_help:
-			context.startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(context.getResources().getString(R.string.string_url_help))));
+			EditText e = new EditText(context);
+			e.setText(Logger.read(context));
+			e.setFocusable(false);
+			new AlertDialog.Builder(context)
+					.setTitle("debug")
+					.setView(e)
+					.show();
+//			context.startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(context.getResources().getString(R.string.string_url_help))));
 			return true;
 		default:
 			return false;
@@ -196,8 +204,7 @@ public class MenuHandler {
 		return ph.getString(PREF_FLASH_MODE, Camera.Parameters.FLASH_MODE_AUTO);
 	}
 
-	private void selectPictureSize(final Context context){
-		Camera camera = capture_listener.getCamera();
+	private void selectPictureSize(final Context context, final Camera camera){
 		Size[] sizes = camera.getParameters().getSupportedPictureSizes().toArray(new Size[0]);
 		final SizeItem[] items=new SizeItem[sizes.length];
 		Size currentsize = camera.getParameters().getPictureSize();
@@ -215,9 +222,9 @@ public class MenuHandler {
 			public void onClick(DialogInterface dialog, int which) {
 				SizeItem item = items[which];
 				PreferenceHelper.getInstance(context).putString(PREF_PICTURE_SIZE, item.toString());
-				Camera.Parameters params = capture_listener.getCamera().getParameters();
+				Camera.Parameters params = camera.getParameters();
 				params.setPictureSize(item.getSize().x, item.getSize().y);
-				capture_listener.getCamera().setParameters(params);
+				camera.setParameters(params);
 				dialog.dismiss();
 			}
 		})
@@ -225,12 +232,12 @@ public class MenuHandler {
 		.show();
 	}
 
-	public Point getPictureSize(Context context){
+	public Point getPictureSize(Context context, Camera camera){
 		String buf = PreferenceHelper.getInstance(context).getString(PREF_PICTURE_SIZE, null);
 		if(buf!=null){
 			return new SizeItem(buf).getSize();
 		}else{
-			Size size = getMinimumSize(capture_listener.getCamera().getParameters().getSupportedPictureSizes().toArray(new Size[0]));
+			Size size = getMinimumSize(camera.getParameters().getSupportedPictureSizes().toArray(new Size[0]));
 			return new Point(size.width, size.height);
 		}
 	}

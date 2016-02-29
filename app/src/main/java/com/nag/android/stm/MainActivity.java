@@ -7,6 +7,7 @@ import com.nag.android.util.PreferenceHelper;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -33,6 +34,7 @@ public class MainActivity extends Activity {
 		FragmentTransaction t = manager.beginTransaction();
 		t.add(R.id.fragmentMain, new CaptureFragment());
 		t.commit();
+		Logger.write(this, "init");
 	}
 
 	@Override
@@ -49,11 +51,32 @@ public class MainActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		return menuhandler.onOptionsItemSelected(this, item);
+		return menuhandler.onOptionsItemSelected(this, camera, item);
 	}
 
 	@Override
 	public void openOptionsMenu() {
 		super.openOptionsMenu();
+	}
+
+	private Camera camera;
+	@Override
+	protected void onResume() {
+		Logger.write(this, "onResume");
+		super.onResume();
+		camera = Camera.open();
+
+	}
+
+	@Override
+	protected void onPause() {
+		Logger.write(this, "onPause");
+		camera.release();
+		camera = null;
+		super.onPause();
+	}
+
+	public Camera getCamera(){
+		return camera;
 	}
 }
